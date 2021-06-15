@@ -66,7 +66,7 @@ genCircleInLine n  = [((o*(gap1+2*r) + r*2, gap1+50*o),gap1+r*o) | o <- [1..from
 -- Geração de Ellipses em suas posições
 -------------------------------------------------------------------------------
 genEllipseInLine :: Int -> [Ellipse]
-genEllipseInLine n  = [((p*(gap2+5*rx) + rx*2, 750),rx/p,ry*p+2) | p <- [0..fromIntegral (n-1)]]
+genEllipseInLine n  = [((p*(gap2+5*rx) + rx*2, 750),rx/p,ry*p+2) | p <- [1..fromIntegral (n)]]
   where rx = 20
         ry = 30
         gap2 = 5
@@ -83,9 +83,11 @@ genLineInLine n  = [((q*20*gap3, 20),(x2, y2)) | q <- [0..fromIntegral (n-1)]]
 -- Geração de Poligonos em suas posições
 -------------------------------------------------------------------------------
 genPolygonInLine :: Int -> [Polygon]
-genPolygonInLine n  = [((r*gap4+1250, 450),(r*gap4+1300,550),(r*gap4+1200,550))| r <- [0..fromIntegral (n-1)]]
+genPolygonInLine n  = [((r*gap4+1250, x),(r*gap4+1300,y),(r*gap4+1200,z))| r <- [0..fromIntegral (n-1)]]
   where gap4 = 100
-
+        x = 450
+        y = 550
+        z = 550
 -------------------------------------------------------------------------------
 -- Strings SVG
 -------------------------------------------------------------------------------
