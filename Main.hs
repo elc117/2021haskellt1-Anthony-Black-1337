@@ -1,16 +1,16 @@
---CODIGO PRINCIPAL
+ --CODIGO PRINCIPAL
 
 import Text.Printf
 
+-------------------------------------------------------------------------------
 --Tipos Criados 
-
+-------------------------------------------------------------------------------
 type Point     = (Float,Float)
 type Rect      = (Point,Float,Float)
 type Circle    = (Point,Float)
 type Ellipse   = (Point,Float,Float)
 type Line      = (Point,Point)
---type Polygon   = --???
-
+type Polygon   = (Point,Point,Point)
 -------------------------------------------------------------------------------
 -- Paletas
 -------------------------------------------------------------------------------
@@ -19,50 +19,72 @@ type Line      = (Point,Point)
 
 --Retangulos
 rgbPaletteRect :: Int -> [(Int,Int,Int)]
-rgbPaletteRect n = take n $ cycle [(28,28,28),(79,79,79),(128,128,128)] 
+rgbPaletteRect n = [(i,i,i) | i <- [0..n] ] 
+
 --Circulos
 rgbPaletteCircle :: Int -> [(Int,Int,Int)]
-rgbPaletteCircle n = take n $ cycle [(21,42,121),(2,135,139),(128,9,107)]
+rgbPaletteCircle n = take n $ cycle [(11+r,32+r,111+r),(g,133+g,137+g),(100+b,-21+b,73+b)]
+      where r = 10
+            g = 2
+            b = 30
+
 --Ellipses
 rgbPaletteEllipse :: Int -> [(Int,Int,Int)]
-rgbPaletteEllipse n = take n $ cycle [(255,18,24),(0,255,100),(242,79,0)]
+rgbPaletteEllipse n = take n $ cycle [(245+r,8+r,14+r),(g,253+g,98+g),(212+b,49+b,b)]
+      where r = 10
+            g = 2
+            b = 30
+
 --Linhas
 rgbPaletteLine :: Int -> [(Int,Int,Int)]
-rgbPaletteLine n = take n $ cycle [(255,0,0),(0,255,127),(255,0,127)]
-
+rgbPaletteLine n = take n $ cycle [(255,255,255),(255-n*2,0+n*2,0+n*4),(0+n*4,0+n*2,255-n*2)]               
+            
+--Trinagulos 
+rgbPalettePolygon :: Int -> [(Int,Int,Int)]
+rgbPalettePolygon n = take n $ cycle [(0+r,0+r,r),(0+g,0+g,0+g),(0+b,b,0+b)]
+      where r = 0
+            g = 0
+            b = 0
 -------------------------------------------------------------------------------
 -- Geração de retângulos em suas posições
 -------------------------------------------------------------------------------
 
 genRectsInLine :: Int -> [Rect]
 genRectsInLine n  = [((m*(w+gap), 10),w,h) | m <- [0..fromIntegral (n-1)]]
-  where (w,h) = (50,1000)
+  where (w,h) = (30,1000)
         gap = 0
 -------------------------------------------------------------------------------
 -- Geração de Circulos em suas posições
 -------------------------------------------------------------------------------
 
 genCircleInLine :: Int -> [Circle]
-genCircleInLine n  = [((o*(gapp+2*r) + r*2, gapp+50*o),gapp+r*o) | o <- [0..fromIntegral (n-1)]]
+genCircleInLine n  = [((o*(gap1+2*r) + r*2, gap1+50*o),gap1+r*o) | o <- [1..fromIntegral (n)]]
   where r = 10
-        gapp = 20
+        gap1 = 20
 
 -------------------------------------------------------------------------------
 -- Geração de Ellipses em suas posições
 -------------------------------------------------------------------------------
 genEllipseInLine :: Int -> [Ellipse]
-genEllipseInLine n  = [((p*(gappp+5*rx) + rx*2, 750),rx/p,ry*p+2) | p <- [0..fromIntegral (n-1)]]
+genEllipseInLine n  = [((p*(gap2+5*rx) + rx*2, 750),rx/p,ry*p+2) | p <- [0..fromIntegral (n-1)]]
   where rx = 20
         ry = 30
-        gappp = 5
+        gap2 = 5
 -------------------------------------------------------------------------------
 -- Geração de Linhas em suas posições
 -------------------------------------------------------------------------------
 genLineInLine :: Int -> [Line]
-genLineInLine n  = [((q*40*gapppp, 10),(x2, y2)) | q <- [0..fromIntegral (n-1)]]
+genLineInLine n  = [((q*20*gap3, 20),(x2, y2)) | q <- [0..fromIntegral (n-1)]]
   where x2 = 2500/2
         y2 = 1000/2
-        gapppp = 10 
+        gap3 = 70
+
+-------------------------------------------------------------------------------
+-- Geração de Poligonos em suas posições
+-------------------------------------------------------------------------------
+genPolygonInLine :: Int -> [Polygon]
+genPolygonInLine n  = [((r*gap4+1250, 450),(r*gap4+1300,550),(r*gap4+1200,550))| r <- [0..fromIntegral (n-1)]]
+  where gap4 = 100
 
 -------------------------------------------------------------------------------
 -- Strings SVG
@@ -85,6 +107,10 @@ svgLine :: Line -> String -> String
 svgLine ((x1,y1),(x2,y2)) style =
   printf "<line x1=\"%.3f\" y1=\"%.3f\" x2=\"%.3f\" y2=\"%.3f\" style=\"stroke-width:10;stroke:%s\"/>\n" x1 y1 x2 y2 style
 
+svgPolygon :: Polygon -> String -> String
+svgPolygon ((x1,y1),(x2,y2),(x3,y3)) style =
+  printf "<polygon points='%.3f,%.3f %.3f,%.3f %.3f,%.3f' fill ='%s' />\n" x1 y1 x2 y2 x3 y3 style
+ 
 -- String inicial do SVG
 svgBegin :: Float -> Float -> String
 svgBegin w h = printf "<svg width='%.2f' height='%.2f' xmlns='http://www.w3.org/2000/svg'>\n" w h 
@@ -92,9 +118,9 @@ svgBegin w h = printf "<svg width='%.2f' height='%.2f' xmlns='http://www.w3.org/
 -- String final do SVG
 svgEnd :: String
 svgEnd = "</svg>"
-
--- Gera string com atributos de estilo para uma dada cor
-
+-------------------------------------------------------------------------------
+--Gera string com atributos de estilo para uma dada cor
+-------------------------------------------------------------------------------
 --Cor do Retangulo
 
 svgStyle :: (Int,Int,Int) -> String
@@ -114,6 +140,10 @@ svgEllipseStyle (r,g,b) = printf "rgb(%d,%d,%d)" r g b
 svgLineStyle :: (Int,Int,Int) -> String
 svgLineStyle (r,g,b) = printf "rgb(%d,%d,%d)" r g b
 
+-- Cor do Poligono
+svgPolygonStyle :: (Int,Int,Int) -> String
+svgPolygonStyle (r,g,b) = printf "rgb(%d,%d,%d)" r g b
+
 -- Gera strings SVG para uma dada lista de figuras e seus atributos de estilo
 
 svgElements :: (a -> String -> String) -> [a] -> [String] -> String
@@ -126,28 +156,34 @@ svgElements func elements styles = concat $ zipWith func elements styles
 
 main :: IO ()
 main = do
-  writeFile "main.svg" $ svgstrs
-  where svgstrs = svgBegin w h  ++ svgfigs ++ svgLineX ++ svgCircleX ++ svgEllipseX  ++ svgEnd
-
-        svgfigs = svgElements svgRect rects (map svgStyle palette)
+  writeFile "main.svg" $ svgstrs --RETANGULO    LINHA        CIRCULO       ELIPSE        POLIGONO        FIM 
+  where svgstrs = svgBegin w h  ++ svgfigsX ++ svgLineX ++ svgCircleX ++ svgEllipseX ++ svgPolygonX  ++ svgEnd
+                 --INICIO 
+        -----------------------------------------------------------------------
+        svgfigsX = svgElements svgRect rects (map svgStyle palette)
         rects = genRectsInLine nrects
         palette = rgbPaletteRect nrects
-        nrects = 48
+        nrects = 100
         -----------------------------------------------------------------------
-        svgCircleX = svgElements svgCircle circle (map svgCircleStyle palheta)
+        svgCircleX = svgElements svgCircle circle (map svgCircleStyle pallete1)
         circle = genCircleInLine nCircle 
-        palheta = rgbPaletteCircle nCircle
+        pallete1 = rgbPaletteCircle nCircle
         nCircle = 10
         -----------------------------------------------------------------------
-        svgEllipseX= svgElements svgEllipse ellipse (map svgEllipseStyle pallheta)
+        svgEllipseX= svgElements svgEllipse ellipse (map svgEllipseStyle pallete2)
         ellipse = genEllipseInLine nEllipse 
-        pallheta = rgbPaletteEllipse nEllipse
+        pallete2 = rgbPaletteEllipse nEllipse
         nEllipse = 10
         -----------------------------------------------------------------------
-        svgLineX= svgElements svgLine line (map svgLineStyle palllheta)
+        svgLineX= svgElements svgLine line (map svgLineStyle pallete3)
         line = genLineInLine nLine 
-        palllheta = rgbPaletteLine nLine
-        nLine = 7
+        pallete3 = rgbPaletteLine nLine
+        nLine = 10
+        -----------------------------------------------------------------------
+        svgPolygonX= svgElements svgPolygon polygon (map svgPolygonStyle pallete4)
+        polygon = genPolygonInLine nPolygon 
+        pallete4 = rgbPalettePolygon nPolygon
+        nPolygon = 1
         -----------------------------------------------------------------------
         (w,h) = (2500,1000) -- Largura e Altura da imagem SVG (minha tela de desenho)
        
